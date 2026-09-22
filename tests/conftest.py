@@ -1,20 +1,17 @@
 import pytest
+from httpx import ASGITransport, AsyncClient
 
-from app import create_app
-
-
-@pytest.fixture()
-def app():
-    app = create_app("testing")
-    with app.app_context():
-        from app.extensions import db
-
-        db.create_all()
-        yield app
-        db.session.remove()
-        db.drop_all()
+from app.main import create_app
 
 
-@pytest.fixture()
-def client(app):
-    return app.test_client()
+@pytest.fixture
+def application():
+    return create_app()
+
+
+@pytest.fixture
+async def client(application):
+    async with AsyncClient(
+        transport=ASGITransport(app=application), base_url="http://test"
+    ) as client:
+        yield client
